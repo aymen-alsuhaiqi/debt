@@ -43,3 +43,28 @@ def crud_customer(request,cid=None):
         customer = Customer.objects.get(id=cid)
         customer.delete()
         return Response('Customer deleted successfully', status=204)
+    
+@api_view(['POST', 'GET'])
+def crud_dept(request,cid=None):
+    if request.method == 'POST':
+        serializer = DeptSerializer(request.data)
+        if serializer:
+            try:
+                customer = Customer.objects.get(id=cid)
+            except Exception as e:
+                return Response('Customer not found', status=404)
+            data = {
+                    'customer': customer,
+                    'amount': request.data['amount']
+                }        
+            serializer.create(data)
+            return Response('The department was created successfully', status=201)
+    elif request.method == 'GET':
+        try:
+            customer = Customer.objects.get(id=cid)
+        except Exception as e:
+            return Response('Customer not found', status=404)
+        depts = Dept.objects.all().filter(customer=customer)
+        serializer = DeptSerializer(depts, many=True)
+        return Response(serializer.data, status=200)
+    
