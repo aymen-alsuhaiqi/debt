@@ -10,3 +10,7 @@ class DeptSerializer(serializers.ModelSerializer):
     class Meta:
         model = Dept
         fields = '__all__'
+
+class UpdateDeptSerializer(serializers.Serializer):
+    amount = serializers.FloatField()
+    status = serializers.CharField(default="+/-")

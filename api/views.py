@@ -3,10 +3,13 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .serializer import *
 from .models import *
-from django.db import connection
+from drf_yasg.utils import swagger_auto_schema
 # Create your views here.
 
-
+@swagger_auto_schema(
+    method='post',
+    request_body=CustomerSerializer,
+)
 @api_view(['GET', 'POST'])
 def cr_customer(request):
     if request.method == 'POST':
@@ -29,6 +32,11 @@ def cr_customer(request):
         customers = Customer.objects.all()
         serializer = CustomerSerializer(customers,many=True)
         return Response(serializer.data, status=200)
+    
+@swagger_auto_schema(
+        method='PATCH',
+        request_body=CustomerSerializer
+)
 @api_view(['PATCH','DELETE'])
 def ud_customer(request,cid=None):
     if request.method == 'PATCH':
@@ -62,7 +70,11 @@ def ud_customer(request,cid=None):
             return Response({'message':'Customer not found'}, status=404)
         customer.delete()
         return Response({'message':'Customer deleted successfully'}, status=204)
-    
+
+@swagger_auto_schema(
+    methods=['post','PATCH'],
+    request_body=UpdateDeptSerializer,
+)
 @api_view(['POST', 'GET','DELETE','PATCH'])
 def crud_dept(request,cid=None):
     if request.method == 'POST':
