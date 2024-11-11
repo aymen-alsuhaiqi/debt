@@ -16,7 +16,13 @@ def crud_customer(request,cid=None):
             if customer:
                 return Response('This customer is already exists',status=401)
             serializer.create(request.data)
-            return Response('The customer was created successfully', status=201)
+            new_customer = CustomerSerializer(Customer.objects.get(name=request.data['name']))
+
+            print("__🔻🔻🔻__ ~ file: views.py:20 ~ new_customer:", new_customer)
+            return Response({
+                                'message':'The customer was created successfully',
+                                'response':new_customer.data,
+                             }, status=201)
         
     elif request.method == 'GET':
         customers = Customer.objects.all()
@@ -31,11 +37,18 @@ def crud_customer(request,cid=None):
             return Response('Customer not found', status=404)
         serializer = CustomerSerializer(customer)
         if serializer:
-            is_exists = Customer.objects.get(name=request.data['name'])
+            try:
+                is_exists = None
+                is_exists = Customer.objects.get(name=request.data['name'])
+            except Exception as e:
+                pass
             if is_exists and is_exists != customer:
                 return Response('This customer is already exists', status=401)
             serializer.update(customer,request.data)
-            return Response('Customer updated successfully', status=200)
+            return Response({
+                                'message':'Customer updated successfully',
+                                'response':serializer.data,
+                             }, status=200)
         return Response('Customer not found', status=404)
     elif request.method == 'DELETE':
         if not cid:
@@ -66,5 +79,13 @@ def crud_dept(request,cid=None):
             return Response('Customer not found', status=404)
         depts = Dept.objects.all().filter(customer=customer)
         serializer = DeptSerializer(depts, many=True)
-        return Response(serializer.data, status=200)
+        total = 0
+        for dept in depts:
+            total += dept.amount
+        data = {
+            'customer':customer.name,
+            'total': total,
+            'depts':serializer.data,
+        }
+        return Response(data, status=200)
     
