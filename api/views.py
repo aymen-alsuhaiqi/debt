@@ -3,6 +3,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .serializer import *
 from .models import *
+from django.db import connection
 # Create your views here.
 
 
@@ -14,7 +15,7 @@ def crud_customer(request,cid=None):
             data = request.data
             customer = Customer.objects.all().filter(name=data['name']).exists()
             if customer:
-                return Response('This customer is already exists',status=401)
+                return Response({'message':'This customer is already exists'},status=401)
             serializer.create(request.data)
             new_customer = CustomerSerializer(Customer.objects.get(name=request.data['name']))
 
@@ -30,11 +31,11 @@ def crud_customer(request,cid=None):
         return Response(serializer.data, status=200)
     elif request.method == 'PATCH':
         if not cid:
-            return Response('Customer ID is required', status=400)
+            return Response({'message':'Customer ID is required'}, status=400)
         try:
             customer = Customer.objects.get(id=cid)
         except Exception as e:
-            return Response('Customer not found', status=404)
+            return Response({'message':'Customer not found'}, status=404)
         serializer = CustomerSerializer(customer)
         if serializer:
             try:
@@ -43,19 +44,22 @@ def crud_customer(request,cid=None):
             except Exception as e:
                 pass
             if is_exists and is_exists != customer:
-                return Response('This customer is already exists', status=401)
+                return Response({'message':'This customer is already exists'}, status=401)
             serializer.update(customer,request.data)
             return Response({
                                 'message':'Customer updated successfully',
                                 'response':serializer.data,
                              }, status=200)
-        return Response('Customer not found', status=404)
+        return Response({'message':'Customer not found'}, status=404)
     elif request.method == 'DELETE':
         if not cid:
-            return Response('Customer ID is required', status=400)
-        customer = Customer.objects.get(id=cid)
+            return Response({'message':'Customer ID is required'}, status=400)
+        try:
+            customer = Customer.objects.get(id=cid)
+        except Exception as e:
+            return Response({'message':'Customer not found'}, status=404)
         customer.delete()
-        return Response('Customer deleted successfully', status=204)
+        return Response({'message':'Customer deleted successfully'}, status=204)
     
 @api_view(['POST', 'GET'])
 def crud_dept(request,cid=None):
@@ -65,18 +69,22 @@ def crud_dept(request,cid=None):
             try:
                 customer = Customer.objects.get(id=cid)
             except Exception as e:
-                return Response('Customer not found', status=404)
+                return Response({'message':'Customer not found'}, status=404)
+            try:
+                amount = request.data['amount'] if request.data['status'] in (1,'+') else -request.data['amount']
+            except Exception as e:
+                return Response({'message':'You have to select status 1/0 or +/-'}, status=400)
             data = {
                     'customer': customer,
-                    'amount': request.data['amount']
+                    'amount': amount
                 }        
             serializer.create(data)
-            return Response('The department was created successfully', status=201)
+            return Response({'message':'The dept was created successfully'}, status=201)
     elif request.method == 'GET':
         try:
             customer = Customer.objects.get(id=cid)
         except Exception as e:
-            return Response('Customer not found', status=404)
+            return Response({'message':'Customer not found'}, status=404)
         depts = Dept.objects.all().filter(customer=customer)
         serializer = DeptSerializer(depts, many=True)
         total = 0
