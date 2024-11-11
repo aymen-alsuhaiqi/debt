@@ -148,3 +148,17 @@ def clear_depts(request,cid):
         depts = Dept.objects.all().filter(customer=customer)
         depts.delete()
         return Response({'message':'Customer deleted successfully'}, status=204)
+    
+@api_view(['GET'])
+def getDepts(request):
+    if request.method == 'GET':
+        depts = Dept.objects.all()
+        serializer = DeptSerializer(depts,many=True)
+        total = 0
+        for d in depts:
+            total += d.amount
+        return Response({
+            'message':'The total of depts',
+            'total': total,
+            
+        })
