@@ -7,8 +7,8 @@ from django.db import connection
 # Create your views here.
 
 
-@api_view(['GET', 'POST','PATCH','DELETE'])
-def crud_customer(request,cid=None):
+@api_view(['GET', 'POST'])
+def cr_customer(request):
     if request.method == 'POST':
         serializer = CustomerSerializer(request.data)
         if serializer:
@@ -29,7 +29,9 @@ def crud_customer(request,cid=None):
         customers = Customer.objects.all()
         serializer = CustomerSerializer(customers,many=True)
         return Response(serializer.data, status=200)
-    elif request.method == 'PATCH':
+@api_view(['PATCH','DELETE'])
+def ud_customer(request,cid=None):
+    if request.method == 'PATCH':
         if not cid:
             return Response({'message':'Customer ID is required'}, status=400)
         try:
