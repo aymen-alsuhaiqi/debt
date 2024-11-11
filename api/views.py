@@ -61,7 +61,7 @@ def crud_customer(request,cid=None):
         customer.delete()
         return Response({'message':'Customer deleted successfully'}, status=204)
     
-@api_view(['POST', 'GET'])
+@api_view(['POST', 'GET','DELETE','PATCH'])
 def crud_dept(request,cid=None):
     if request.method == 'POST':
         serializer = DeptSerializer(request.data)
@@ -97,3 +97,40 @@ def crud_dept(request,cid=None):
         }
         return Response(data, status=200)
     
+    elif request.method == 'DELETE':
+        try:
+            dept = Dept.objects.get(id=cid)
+        except Exception as e:
+            return Response({'message':'Dept not found'},status=404)
+        dept.delete()
+        return Response({'message':'Dept deleted successfully'}, status=204)
+    
+    elif request.method == 'PATCH':
+        try:
+            dept = Dept.objects.get(id=cid)
+        except Exception as e:
+            return Response({'message':'Dept not found'}, status=404)
+        serializer = DeptSerializer(dept)
+        if serializer:
+            try:
+                amount = request.data['amount'] if request.data['status'] in (1,'+') else -request.data['amount']
+            except Exception as e:
+                return Response({'message':'You have to select status 1/0 or +/-'}, status=400)
+            serializer.update(dept,{'amount':amount})
+            dept = Dept.objects.get(id=cid)
+            serializer = DeptSerializer(dept)
+            return Response({
+                'message':'Dept updated successfully',
+                'response': serializer.data,
+                             }, status=200)
+        
+@api_view(['DELETE'])
+def clear_depts(request,cid):
+    if request.method == 'DELETE':
+        try:
+            customer = Customer.objects.get(id=cid)
+        except Exception as e:
+            return Response({'message':'Customer not found'},status=404)
+        depts = Dept.objects.all().filter(customer=customer)
+        depts.delete()
+        return Response({'message':'Customer deleted successfully'}, status=204)
